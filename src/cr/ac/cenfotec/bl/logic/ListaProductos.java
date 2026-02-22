@@ -120,4 +120,16 @@ public class ListaProductos {
 
         System.out.println("TOTAL GENERAL INVENTARIO: ₡" + totalGeneral);
     }
+
+    public java.util.List<Producto> obtenerProductos() {
+        java.util.List<Producto> lista = new java.util.ArrayList<>();
+        NodoProducto actual = cabeza;
+
+        while (actual != null) {
+            lista.add(actual.producto);
+            actual = actual.siguiente;
+        }
+
+        return lista;
+    }
 }
