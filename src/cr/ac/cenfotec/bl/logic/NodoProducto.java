@@ -3,12 +3,12 @@ package cr.ac.cenfotec.bl.logic;
 import cr.ac.cenfotec.bl.entities.Producto;
 
 public class NodoProducto {
-
-    Producto producto;
-    NodoProducto siguiente;
+    public Producto producto;
+    public NodoProducto izq, der;
 
     public NodoProducto(Producto producto) {
         this.producto = producto;
-        this.siguiente = null;
+        this.izq = null;
+        this.der = null;
     }
 }
