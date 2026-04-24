@@ -5,16 +5,17 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Clase que gestiona el inventario principal de la tienda.
- * Implementa un Árbol Binario de Búsqueda (BST) para optimizar
- * las operaciones de búsqueda y ordenamiento por nombre.
+ * Gestiona el inventario principal mediante un Árbol Binario de Búsqueda (BST).
+ * Esta estructura permite una complejidad promedio de O(log n) para operaciones
+ * de inserción, búsqueda y eliminación, utilizando el nombre del producto como llave.
  */
 public class ArbolProducto {
     private NodoProducto raiz;
 
     /**
-     * Inserta un nuevo producto en el árbol de forma organizada.
-     * @param producto Objeto Producto a almacenar.
+     * Inserta un nuevo producto en el árbol.
+     * La ubicación del nuevo nodo se determina mediante comparación alfabética.
+     * * @param producto Objeto Producto con los datos a almacenar.
      */
     public void insertar(Producto producto) {
         raiz = insertarRecursivo(raiz, producto);
@@ -30,13 +31,14 @@ public class ArbolProducto {
         } else if (comp > 0) {
             actual.der = insertarRecursivo(actual.der, producto);
         }
+        // Los nombres duplicados no se insertan para mantener la integridad de la llave
         return actual;
     }
 
     /**
-     * Busca un producto por su nombre (llave del árbol).
-     * @param nombre Nombre del producto a buscar.
-     * @return El objeto Producto si existe, null en caso contrario.
+     * Localiza un producto específico dentro del árbol.
+     * * @param nombre El nombre del producto a buscar.
+     * @return El objeto Producto encontrado o null si no existe.
      */
     public Producto buscar(String nombre) {
         return buscarRecursivo(raiz, nombre);
@@ -55,9 +57,9 @@ public class ArbolProducto {
     }
 
     /**
-     * Elimina un producto del árbol reestructurando los nodos según sea necesario.
-     * Maneja los 3 casos: nodo hoja, nodo con un hijo y nodo con dos hijos.
-     * @param nombre Nombre del producto a eliminar.
+     * Elimina un nodo del árbol basándose en el nombre del producto.
+     * Implementa la reestructuración por sucesor para el caso de dos hijos.
+     * * @param nombre Nombre del producto que se desea remover.
      */
     public void eliminar(String nombre) {
         raiz = eliminarRecursivo(raiz, nombre);
@@ -73,28 +75,32 @@ public class ArbolProducto {
         } else if (comp > 0) {
             actual.der = eliminarRecursivo(actual.der, nombre);
         } else {
-            // Caso 1 y 2: El nodo tiene un hijo o ninguno
+            // Caso de eliminación: El nodo ha sido encontrado
             if (actual.izq == null) return actual.der;
             if (actual.der == null) return actual.izq;
 
-            // Caso 3: El nodo tiene dos hijos
-            // Se busca el sucesor (mínimo del subárbol derecho)
+            // Caso con dos hijos: Se busca el sucesor inmediato (valor mínimo a la derecha)
             Producto sucesor = encontrarMinimo(actual.der);
             actual.producto = sucesor;
-            // Se elimina el sucesor original
+            // Se elimina el nodo sucesor que fue movido a la posición actual
             actual.der = eliminarRecursivo(actual.der, sucesor.getNombre());
         }
         return actual;
     }
 
+    /**
+     * Encuentra el producto con el valor alfabético más bajo en un subárbol.
+     * * @param nodo El punto de inicio de la búsqueda (subárbol derecho).
+     * @return El producto con el nombre menor.
+     */
     private Producto encontrarMinimo(NodoProducto nodo) {
         return nodo.izq == null ? nodo.producto : encontrarMinimo(nodo.izq);
     }
 
     /**
-     * Genera una lista de productos ordenada alfabéticamente.
-     * Utiliza un recorrido In-Order (Izquierda - Raíz - Derecha).
-     * @return Lista de productos para mostrar en la UI.
+     * Recupera todos los productos del inventario en orden alfabético.
+     * Realiza un recorrido In-Order para garantizar la secuencia correcta.
+     * * @return List de productos ordenados alfabéticamente.
      */
     public List<Producto> obtenerTodos() {
         List<Producto> lista = new ArrayList<>();
