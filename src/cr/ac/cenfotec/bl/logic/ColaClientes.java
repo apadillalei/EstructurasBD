@@ -1,6 +1,7 @@
 package cr.ac.cenfotec.bl.logic;
 
 import cr.ac.cenfotec.bl.entities.Cliente;
+import java.io.Serializable;
 import java.util.LinkedList;
 
 /**
@@ -8,14 +9,27 @@ import java.util.LinkedList;
  * Utiliza una estructura de LinkedList para permitir inserciones en posiciones
  * intermedias basadas en el nivel de prioridad del cliente (1-3).
  */
-public class ColaClientes {
+public class ColaClientes implements Serializable {
+    private static final long serialVersionUID = 1L;
     private LinkedList<Cliente> cola;
+    private Grafo mapaLogistico;
 
     /**
      * Constructor que inicializa la lista enlazada para la cola.
      */
     public ColaClientes() {
         this.cola = new LinkedList<>();
+        this.mapaLogistico = null;
+    }
+
+    /**
+     * Constructor que permite integrar la cola con el grafo logístico.
+     * Al encolar un cliente, su ubicación se registra automáticamente como vértice.
+     * @param mapaLogistico Grafo de ubicaciones utilizado para despachos.
+     */
+    public ColaClientes(Grafo mapaLogistico) {
+        this.cola = new LinkedList<>();
+        this.mapaLogistico = mapaLogistico;
     }
 
     /**
@@ -25,6 +39,10 @@ public class ColaClientes {
      * * @param nuevoCliente Objeto Cliente que ingresa a la fila.
      */
     public void encolar(Cliente nuevoCliente) {
+        if (mapaLogistico != null && nuevoCliente.getUbicacion() != null && !nuevoCliente.getUbicacion().isBlank()) {
+            mapaLogistico.agregarVertice(nuevoCliente.getUbicacion());
+        }
+
         if (cola.isEmpty()) {
             cola.add(nuevoCliente);
         } else {

@@ -1,11 +1,13 @@
 package cr.ac.cenfotec.bl.logic;
+import java.io.Serializable;
 
 /**
  * Clase controladora de la lógica de negocio que centraliza las estructuras de datos.
  * Administra el inventario (Árbol), la fila de clientes (Cola) y la red de
  * distribución (Grafo), además de definir el punto de origen de los despachos.
  */
-public class Tienda {
+public class Tienda implements Serializable {
+    private static final long serialVersionUID = 1L;
     private ArbolProducto inventario;
     private ColaClientes colaAtencion;
     private Grafo mapaLogistico;
@@ -17,8 +19,8 @@ public class Tienda {
      */
     public Tienda() {
         this.inventario = new ArbolProducto();
-        this.colaAtencion = new ColaClientes();
         this.mapaLogistico = new Grafo();
+        this.colaAtencion = new ColaClientes(this.mapaLogistico);
         this.ubicacionSede = "Sede Central"; // Punto de origen para el algoritmo de Dijkstra
         inicializarMapaBase();
     }

@@ -4,7 +4,10 @@
       <root url="file://$PROJECT_DIR$/../../../javafx/javafx-sdk-17.0.18/lib" />
     </CLASSES>
     <JAVADOC />
-    <SOURCES />
+    <SOURCES>
+      <root url="file://$USER_HOME$/JavaFX/javafx-sdk-25.0.2" />
+    </SOURCES>
     <jarDirectory url="file://$PROJECT_DIR$/../../../javafx/javafx-sdk-17.0.18/lib" recursive="false" />
+    <jarDirectory url="file://$USER_HOME$/JavaFX/javafx-sdk-25.0.2" recursive="false" type="SOURCES" />
   </library>
 </component>

@@ -1,6 +1,7 @@
 package cr.ac.cenfotec.bl.logic;
 
 import cr.ac.cenfotec.bl.entities.Producto;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -9,7 +10,8 @@ import java.util.List;
  * Implementada como una estructura de datos de Lista Simple Enlazada,
  * permitiendo un almacenamiento dinámico de los productos seleccionados.
  */
-public class ListaProductos {
+public class ListaProductos implements Serializable {
+    private static final long serialVersionUID = 1L;
 
     private NodoLista cabeza;
 

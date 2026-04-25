@@ -1,13 +1,15 @@
 package cr.ac.cenfotec.bl.entities;
 
 import cr.ac.cenfotec.bl.logic.ListaProductos;
+import java.io.Serializable;
 
 /**
  * Entidad que representa a un cliente dentro del sistema.
  * Almacena la información personal, nivel de prioridad para la atención,
  * ubicación geográfica para la logística de entrega y su carrito de compras.
  */
-public class Cliente {
+public class Cliente implements Serializable {
+    private static final long serialVersionUID = 1L;
     private String id;
     private String nombre;
     private int prioridad; // 1: Básico, 2: Afiliado, 3: Premium

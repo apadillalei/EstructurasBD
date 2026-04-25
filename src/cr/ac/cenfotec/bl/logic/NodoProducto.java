@@ -1,13 +1,15 @@
 package cr.ac.cenfotec.bl.logic;
 
 import cr.ac.cenfotec.bl.entities.Producto;
+import java.io.Serializable;
 
 /**
  * Representa un nodo individual dentro de la estructura del ArbolProducto.
  * Cada nodo almacena un objeto Producto y referencias a sus nodos hijos
  * para facilitar la navegación jerárquica del árbol binario.
  */
-public class NodoProducto {
+public class NodoProducto implements Serializable {
+    private static final long serialVersionUID = 1L;
     /**
      * El objeto Producto almacenado en este nodo del árbol.
      */

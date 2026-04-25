@@ -1,13 +1,15 @@
 package cr.ac.cenfotec.bl.entities;
 
 import java.util.ArrayList;
+import java.io.Serializable;
 
 /**
  * Representa un producto dentro del sistema de inventarios.
  * Contiene información sobre costos, existencias, categorización y
  * recursos visuales asociados.
  */
-public class Producto {
+public class Producto implements Serializable {
+    private static final long serialVersionUID = 1L;
 
     private String nombre;
     private double precio;

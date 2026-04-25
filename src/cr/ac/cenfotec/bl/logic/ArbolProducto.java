@@ -1,6 +1,7 @@
 package cr.ac.cenfotec.bl.logic;
 
 import cr.ac.cenfotec.bl.entities.Producto;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -9,7 +10,8 @@ import java.util.List;
  * Esta estructura permite una complejidad promedio de O(log n) para operaciones
  * de inserción, búsqueda y eliminación, utilizando el nombre del producto como llave.
  */
-public class ArbolProducto {
+public class ArbolProducto implements Serializable {
+    private static final long serialVersionUID = 1L;
     private NodoProducto raiz;
 
     /**

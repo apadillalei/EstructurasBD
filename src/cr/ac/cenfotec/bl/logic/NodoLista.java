@@ -1,12 +1,14 @@
 package cr.ac.cenfotec.bl.logic;
 
 import cr.ac.cenfotec.bl.entities.Producto;
+import java.io.Serializable;
 
 /**
  * Clase que representa un elemento individual (nodo) dentro de la ListaProductos.
  * Contiene la carga útil (Producto) y la referencia al siguiente elemento en la secuencia.
  */
-public class NodoLista {
+public class NodoLista implements Serializable {
+    private static final long serialVersionUID = 1L;
     /**
      * Objeto de la entidad Producto almacenado en este nodo.
      */

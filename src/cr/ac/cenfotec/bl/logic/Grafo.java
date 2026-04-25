@@ -1,13 +1,15 @@
 package cr.ac.cenfotec.bl.logic;
 
 import java.util.*;
+import java.io.Serializable;
 
 /**
  * Clase que gestiona la red logística mediante un Grafo ponderado no dirigido.
  * Implementa el algoritmo de Dijkstra para determinar la ruta de entrega más corta
  * entre la sede central y la ubicación del cliente.
  */
-public class Grafo {
+public class Grafo implements Serializable {
+    private static final long serialVersionUID = 1L;
     /** * Representación del grafo mediante lista de adyacencia (Map de Maps).
      * La llave externa es el origen, la interna es el destino y el Integer es el peso (distancia).
      */
@@ -35,6 +37,9 @@ public class Grafo {
      * @param peso    Distancia o costo de la arista (debe ser estático y positivo).
      */
     public void agregarArista(String origen, String destino, int peso) {
+        if (peso <= 0) {
+            throw new IllegalArgumentException("La distancia debe ser un número entero positivo.");
+        }
         agregarVertice(origen);
         agregarVertice(destino);
         adyacencia.get(origen).put(destino, peso);

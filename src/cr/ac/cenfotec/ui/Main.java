@@ -3,6 +3,10 @@ package cr.ac.cenfotec.ui;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Map;
 import cr.ac.cenfotec.bl.entities.Producto;
 import cr.ac.cenfotec.bl.entities.Cliente;
@@ -15,14 +19,16 @@ import cr.ac.cenfotec.bl.logic.Tienda;
  */
 public class Main {
 
-    private static Tienda tienda = new Tienda();
-    private static BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+    private static final Path ESTADO_ARCHIVO = Path.of("estado_tienda.dat");
+    private static Tienda tienda;
+    private static final BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 
     /**
      * Punto de entrada de la aplicación.
      * @param args Argumentos de línea de comandos (no utilizados).
      */
     public static void main(String[] args) {
+        tienda = cargarEstado();
         menu();
     }
 
@@ -42,9 +48,7 @@ public class Main {
                 System.out.println("5. Retirar producto de inventario");
                 System.out.println("6. Gestionar Mapa de Entregas (Grafo)");
                 System.out.println("0. Salir");
-                System.out.print("Seleccione una opción: ");
-
-                opcion = Integer.parseInt(br.readLine());
+                opcion = leerEntero("Seleccione una opción: ");
 
                 switch (opcion) {
                     case 1: agregarProductoAlInventario(); break;
@@ -53,11 +57,16 @@ public class Main {
                     case 4: atenderCliente(); break;
                     case 5: eliminarDelInventario(); break;
                     case 6: gestionarMapa(); break;
-                    case 0: System.out.println("Cerrando sistema..."); break;
+                    case 0:
+                        guardarEstado();
+                        System.out.println("Cerrando sistema...");
+                        break;
                     default: System.out.println("Opción no válida.");
                 }
-            } catch (NumberFormatException e) {
-                System.out.println("Error: Debe ingresar un número válido.");
+            } catch (IllegalArgumentException e) {
+                System.out.println("Error de validación: " + e.getMessage());
+            } catch (IOException e) {
+                System.out.println("Error de entrada/salida: " + e.getMessage());
             } catch (Exception e) {
                 System.out.println("Error crítico: " + e.getMessage());
             }
@@ -69,50 +78,56 @@ public class Main {
      * Facilita la creación de vértices y aristas ponderadas en el Grafo.
      */
     private static void gestionarMapa() throws IOException {
-        System.out.println("\n--- GESTIÓN DE RED DE ENTREGAS ---");
-        System.out.println("1. Agregar nueva ubicación (Vértice)");
-        System.out.println("2. Conectar ubicaciones (Arista)");
-        System.out.println("3. Ver ubicaciones actuales");
-        System.out.print("Seleccione: ");
-        int subOpcion = Integer.parseInt(br.readLine());
+        int subOpcion = -1;
+        while (subOpcion != 0) {
+            System.out.println("\n--- GESTIÓN DE RED DE ENTREGAS ---");
+            System.out.println("1. Agregar nueva ubicación (Vértice)");
+            System.out.println("2. Conectar ubicaciones (Arista)");
+            System.out.println("3. Ver ubicaciones actuales");
+            System.out.println("0. Volver al menú principal");
+            subOpcion = leerEntero("Seleccione: ");
 
-        if (subOpcion == 1) {
-            System.out.print("Nombre de la ubicación: ");
-            tienda.getMapaLogistico().agregarVertice(br.readLine());
-            System.out.println("Ubicación añadida.");
-        } else if (subOpcion == 2) {
-            System.out.print("Punto A: "); String a = br.readLine();
-            System.out.print("Punto B: "); String b = br.readLine();
-            System.out.print("Distancia (Km): "); int dist = Integer.parseInt(br.readLine());
-            tienda.getMapaLogistico().agregarArista(a, b, dist);
-            System.out.println("Conexión establecida.");
-        } else if (subOpcion == 3) {
-            System.out.println("Puntos de entrega registrados: " + tienda.getMapaLogistico().getVertices());
+            if (subOpcion == 1) {
+                String ubicacion = leerTextoNoVacio("Nombre de la ubicación: ");
+                tienda.getMapaLogistico().agregarVertice(ubicacion);
+                System.out.println("Ubicación añadida.");
+            } else if (subOpcion == 2) {
+                String a = leerTextoNoVacio("Punto A: ");
+                String b = leerTextoNoVacio("Punto B: ");
+                int dist = leerEntero("Distancia (Km): ");
+                try {
+                    tienda.getMapaLogistico().agregarArista(a, b, dist);
+                    System.out.println("Conexión establecida.");
+                } catch (IllegalArgumentException e) {
+                    System.out.println("No se pudo crear la conexión: " + e.getMessage());
+                }
+            } else if (subOpcion == 3) {
+                System.out.println("Puntos de entrega registrados: " + tienda.getMapaLogistico().getVertices());
+            } else if (subOpcion != 0) {
+                System.out.println("Opción no válida.");
+            }
         }
     }
 
     /**
      * Registra un cliente capturando su ubicación geográfica.
-     * Garantiza que la ubicación del cliente exista como vértice en el sistema logístico.
+     * La ubicación se integra al grafo cuando el cliente entra en la cola de atención.
      */
     private static void registrarCliente() throws IOException {
         System.out.println("\n--- REGISTRO DE CLIENTE ---");
-        System.out.print("ID: "); String id = br.readLine();
-        System.out.print("Nombre: "); String nombre = br.readLine();
-        System.out.print("Prioridad (1: Básico, 2: Afiliado, 3: Premium): ");
-        int prioridad = Integer.parseInt(br.readLine());
-        System.out.print("Ubicación de entrega: "); String ubicacion = br.readLine();
-
-        // Sincronización automática con el Grafo
-        tienda.getMapaLogistico().agregarVertice(ubicacion);
+        String id = leerTextoNoVacio("ID: ");
+        String nombre = leerTextoNoVacio("Nombre: ");
+        int prioridad = leerPrioridad();
+        String ubicacion = leerTextoNoVacio("Ubicación de entrega: ");
 
         Cliente nuevo = new Cliente(id, nombre, prioridad, ubicacion);
 
-        System.out.print("¿Desea realizar una compra ahora? (s/n): ");
-        if (br.readLine().equalsIgnoreCase("s")) {
+        String respuesta = leerSiNo("¿Desea realizar una compra ahora? (s/n): ");
+        if ("s".equalsIgnoreCase(respuesta)) {
             gestionarCompra(nuevo);
         } else {
-            System.out.println("Cliente registrado exitosamente.");
+            tienda.getColaAtencion().encolar(nuevo);
+            System.out.println("Cliente registrado y añadido a la fila de atención.");
         }
     }
 
@@ -159,10 +174,10 @@ public class Main {
 
     private static void agregarProductoAlInventario() throws IOException {
         System.out.println("\n--- NUEVO PRODUCTO ---");
-        System.out.print("Nombre: "); String nombre = br.readLine();
-        System.out.print("Precio: "); double precio = Double.parseDouble(br.readLine());
-        System.out.print("Stock inicial: "); int cantidad = Integer.parseInt(br.readLine());
-        System.out.print("Categoría: "); String cat = br.readLine();
+        String nombre = leerTextoNoVacio("Nombre: ");
+        double precio = leerDoublePositivo("Precio: ");
+        int cantidad = leerEnteroPositivo("Stock inicial: ");
+        String cat = leerTextoNoVacio("Categoría: ");
 
         Producto p = new Producto(nombre, precio, cat, "No aplica", cantidad);
         tienda.getInventario().insertar(p);
@@ -184,13 +199,11 @@ public class Main {
     private static void gestionarCompra(Cliente cliente) throws IOException {
         String continuar = "s";
         while (continuar.equalsIgnoreCase("s")) {
-            System.out.print("Producto a comprar: ");
-            String prodNombre = br.readLine();
+            String prodNombre = leerTextoNoVacio("Producto a comprar: ");
             Producto p = tienda.getInventario().buscar(prodNombre);
 
             if (p != null) {
-                System.out.print("Cantidad (" + p.getCantidad() + " disponibles): ");
-                int cant = Integer.parseInt(br.readLine());
+                int cant = leerEntero("Cantidad (" + p.getCantidad() + " disponibles): ");
                 if (cant > 0 && cant <= p.getCantidad()) {
                     Producto item = new Producto(p.getNombre(), p.getPrecio(), p.getCategoria(), p.getFechaVencimiento(), cant);
                     cliente.getCarrito().insertarFinal(item);
@@ -199,16 +212,117 @@ public class Main {
                 } else { System.out.println("Cantidad insuficiente o inválida."); }
             } else { System.out.println("Producto no encontrado."); }
 
-            System.out.print("¿Agregar más productos? (s/n): ");
-            continuar = br.readLine();
+            continuar = leerSiNo("¿Agregar más productos? (s/n): ");
         }
         tienda.getColaAtencion().encolar(cliente);
         System.out.println("Cliente añadido a la fila de atención por prioridad.");
     }
 
     private static void eliminarDelInventario() throws IOException {
-        System.out.print("Nombre del producto a retirar del sistema: ");
-        tienda.getInventario().eliminar(br.readLine());
-        System.out.println("Operación completada.");
+        String nombre = leerTextoNoVacio("Nombre del producto a retirar del sistema: ");
+        Producto existente = tienda.getInventario().buscar(nombre);
+        if (existente == null) {
+            System.out.println("No existe un producto con ese nombre.");
+            return;
+        }
+        tienda.getInventario().eliminar(nombre);
+        System.out.println("Producto eliminado correctamente.");
+    }
+
+    private static String leerTextoNoVacio(String mensaje) throws IOException {
+        while (true) {
+            System.out.print(mensaje);
+            String valor = br.readLine();
+            if (valor != null && !valor.trim().isBlank()) {
+                return valor.trim();
+            }
+            System.out.println("El valor no puede estar vacío.");
+        }
+    }
+
+    private static int leerEntero(String mensaje) throws IOException {
+        while (true) {
+            System.out.print(mensaje);
+            String entrada = br.readLine();
+            try {
+                return Integer.parseInt(entrada);
+            } catch (NumberFormatException e) {
+                System.out.println("Debe ingresar un número entero válido.");
+            }
+        }
+    }
+
+    private static int leerEnteroPositivo(String mensaje) throws IOException {
+        while (true) {
+            int valor = leerEntero(mensaje);
+            if (valor > 0) {
+                return valor;
+            }
+            System.out.println("El valor debe ser mayor que cero.");
+        }
+    }
+
+    private static double leerDoublePositivo(String mensaje) throws IOException {
+        while (true) {
+            System.out.print(mensaje);
+            String entrada = br.readLine();
+            try {
+                double valor = Double.parseDouble(entrada);
+                if (valor > 0) {
+                    return valor;
+                }
+                System.out.println("El valor debe ser mayor que cero.");
+            } catch (NumberFormatException e) {
+                System.out.println("Debe ingresar un número decimal válido.");
+            }
+        }
+    }
+
+    private static int leerPrioridad() throws IOException {
+        while (true) {
+            int prioridad = leerEntero("Prioridad (1: Básico, 2: Afiliado, 3: Premium): ");
+            if (prioridad >= 1 && prioridad <= 3) {
+                return prioridad;
+            }
+            System.out.println("La prioridad debe ser 1, 2 o 3.");
+        }
+    }
+
+    private static String leerSiNo(String mensaje) throws IOException {
+        while (true) {
+            System.out.print(mensaje);
+            String respuesta = br.readLine();
+            if (respuesta != null && (respuesta.equalsIgnoreCase("s") || respuesta.equalsIgnoreCase("n"))) {
+                return respuesta;
+            }
+            System.out.println("Debe responder con 's' o 'n'.");
+        }
+    }
+
+    private static Tienda cargarEstado() {
+        if (!Files.exists(ESTADO_ARCHIVO)) {
+            return new Tienda();
+        }
+
+        try (ObjectInputStream in = new ObjectInputStream(Files.newInputStream(ESTADO_ARCHIVO))) {
+            Object obj = in.readObject();
+            if (obj instanceof Tienda tiendaCargada) {
+                System.out.println("Estado cargado desde " + ESTADO_ARCHIVO + ".");
+                return tiendaCargada;
+            }
+            System.out.println("El archivo de estado no tiene un formato válido. Se iniciará una tienda nueva.");
+        } catch (Exception e) {
+            System.out.println("No se pudo cargar el estado previo: " + e.getMessage());
+        }
+        return new Tienda();
+    }
+
+    private static void guardarEstado() {
+        try (ObjectOutputStream out = new ObjectOutputStream(Files.newOutputStream(ESTADO_ARCHIVO))) {
+            out.writeObject(tienda);
+            System.out.println("Estado guardado en " + ESTADO_ARCHIVO + ".");
+        } catch (IOException e) {
+            System.out.println("No se pudo guardar el estado actual: " + e.getMessage());
+        }
     }
 }
